@@ -1,5 +1,5 @@
 FROM python:latest
-MAINTAINER Alessandro Iob <alessandro.iob@gmail.com>
+LABEL maintainer="Alessandro Iob <alessandro.iob@gmail.com>"
 
 # Environment setting
 ENV APP_ENVIRONMENT production
@@ -14,4 +14,4 @@ COPY ./config ./config
 
 EXPOSE 8000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:8000", "flashfeed.server:app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "flashfeed.__main__:server"]
