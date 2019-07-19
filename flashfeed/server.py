@@ -1,5 +1,3 @@
-from bs4 import BeautifulSoup
-import requests
 import uuid
 import json
 from urllib.parse import urlparse
@@ -11,20 +9,20 @@ import logging
 import sys
 import pprint
 
-from pony import orm
 import datetime
 
-from .entities import *
+def setup_logger():
+    logger = logging.getLogger(__name__)
+    logger.setLevel(logging.DEBUG)
+    handler = logging.StreamHandler(sys.stdout)
+    formatter = logging.Formatter(
+        '[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s'
+    )
+    handler.setFormatter(formatter)
+    handler.setLevel(logging.DEBUG)
+    logger.addHandler(handler)
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter(
-    '[%(asctime)s] [%(name)s] [%(levelname)s] %(message)s'
-)
-handler.setFormatter(formatter)
-handler.setLevel(logging.DEBUG)
-logger.addHandler(handler)
+    return logger
 
 NEWS_OUTLETS = json.load(open('./config/news_outlets.json'))
 
@@ -42,142 +40,89 @@ class RAIFeed(object):
 
         self._db_setup(NEWS_OUTLETS)
 
-    def _db_setup(self, news_outlets):
-        logger.info('raifeed.db_setup')
+    # def _to_https(self, url):
+    #     if url.startswith('http://'):
+    #         url = 'https://' + url.lstrip('http://')
+    #     return url
 
-        if not os.path.exists(self.DATA_FOLDER):
-            os.makedirs(self.DATA_FOLDER, exist_ok=False)
+    # def _resolve_url(self, url):
+    #     url = requests.get(url, allow_redirects=False).headers['location']
+    #     # url = urlparse(url)
+    #     # url = url.scheme + '://' + url.netloc + url.path
 
-        db.bind(
-            provider='sqlite',
-            filename=os.path.join('..', self.DATA_FOLDER, self.DB_NAME),
-            create_db=True
-        )
-        db.generate_mapping(create_tables=True)
+    #     return url
 
-        self._db_seed(news_outlets)
+    # def crawl(self):
+    #     logger.info('raifeed.crawl')
 
-        self.crawl()
+    #     with orm.db_session:
+    #         db_news_sources = NewsSource.select()
 
-    def _db_seed(self, news_outlets):
-        logger.info('raifeed.db_seed')
+    #         for db_news_source in db_news_sources:
+    #             logger.info(
+    #                 f'raifeed.crawl.db_news_source: rocessing name={db_news_source.name} country={db_news_source.country} region={db_news_source.region} url={db_news_source.url}')
+    #             html_doc = requests.get(db_news_source.url).content
+    #             soup = BeautifulSoup(html_doc, 'html.parser')
 
-        with orm.db_session:
-            for news_outlet in news_outlets:
-                db_news_outlet = NewsOutlet.select(
-                    lambda ns: ns.url == news_outlet['url'])
+    #             urls = {}
 
-                news_sources = news_outlet['news_sources']
+    #             dataFeeds = soup.select('[data-feed]')
+    #             # print(dataFeeds)
 
-                if not db_news_outlet:
-                    now = datetime.datetime.now()
-                    del news_outlet['news_sources']
-                    db_news_outlet = NewsOutlet(
-                        created_at=now, updated_at=now, **news_outlet)
+    #             for dataFeed in dataFeeds:
+    #                 # print(dir(dataFeed))
 
-                for news_source in news_sources:
-                    db_news_source = NewsSource.select(
-                        lambda ns: ns.url == news_source['url'])
+    #                 name = dataFeed.getText().lower().replace(' ', '_')
+    #                 url = db_news_source.base_url + dataFeed['data-feed']
+    #                 content = requests.get(url).json()
+    #                 items = content.get('items', [])
 
-                    if not db_news_source:
-                        now = datetime.datetime.now()
-                        db_news_source = NewsSource(
-                            created_at=now, updated_at=now, news_outlet=db_news_outlet, **news_source)
+    #                 if items:
+    #                     item = items[0]
+    #                     title = item['title']
+    #                     date = parse(item['date'])
+    #                     url = self._to_https(item['mediaUrl'])
+    #                     media_type = self._get_media_type(item['type'])
+    #                     db_news_entity = None
 
-    def _get_media_type(self, data):
-        media_type = 'unknown'
-        data = data.lower()
+    #                     logger.info(
+    #                         f'raifeed.crowl.db_news_entity.check: date={date} name={name} title={title} news_source={db_news_source.name} url={url}')
 
-        if 'video' in data:
-            media_type = 'video'
-        elif 'audio' in data:
-            media_type = 'audio'
+    #                     db_news_entity = NewsEntity.select(
+    #                         lambda ne:
+    #                             ne.name == name and
+    #                             ne.news_source == db_news_source and
+    #                             ne.url == url
+    #                     ).first()
 
-        return media_type
+    #                     if db_news_entity:
+    #                         logger.info(
+    #                             f'raifeed.crawl.db_news_entity.exists: date={db_news_entity.date} updated_at={db_news_entity.updated_at} name={db_news_entity.name} title={db_news_entity.title} news_source={db_news_entity.news_source.name} url={db_news_entity.url}')
+    #                         continue
 
-    def _to_https(self, url):
-        if url.startswith('http://'):
-            url = 'https://' + url.lstrip('http://')
-        return url
+    #                     now = datetime.datetime.now()
 
-    def _resolve_url(self, url):
-        url = requests.get(url, allow_redirects=False).headers['location']
-        # url = urlparse(url)
-        # url = url.scheme + '://' + url.netloc + url.path
-
-        return url
-
-    def crawl(self):
-        logger.info('raifeed.crawl')
-
-        with orm.db_session:
-            db_news_sources = NewsSource.select()
-
-            for db_news_source in db_news_sources:
-                logger.info(
-                    f'raifeed.crawl.db_news_source: rocessing name={db_news_source.name} country={db_news_source.country} region={db_news_source.region} url={db_news_source.url}')
-                html_doc = requests.get(db_news_source.url).content
-                soup = BeautifulSoup(html_doc, 'html.parser')
-
-                urls = {}
-
-                dataFeeds = soup.select('[data-feed]')
-                # print(dataFeeds)
-
-                for dataFeed in dataFeeds:
-                    # print(dir(dataFeed))
-
-                    name = dataFeed.getText().lower().replace(' ', '_')
-                    url = db_news_source.base_url + dataFeed['data-feed']
-                    content = requests.get(url).json()
-                    items = content.get('items', [])
-
-                    if items:
-                        item = items[0]
-                        title = item['title']
-                        date = parse(item['date'])
-                        url = self._to_https(item['mediaUrl'])
-                        media_type = self._get_media_type(item['type'])
-                        db_news_entity = None
-
-                        logger.info(
-                            f'raifeed.crowl.db_news_entity.check: date={date} name={name} title={title} news_source={db_news_source.name} url={url}')
-
-                        db_news_entity = NewsEntity.select(
-                            lambda ne:
-                                ne.name == name and
-                                ne.news_source == db_news_source and
-                                ne.url == url
-                        ).first()
-
-                        if db_news_entity:
-                            logger.info(
-                                f'raifeed.crawl.db_news_entity.exists: date={db_news_entity.date} updated_at={db_news_entity.updated_at} name={db_news_entity.name} title={db_news_entity.title} news_source={db_news_entity.news_source.name} url={db_news_entity.url}')
-                            continue
-
-                        now = datetime.datetime.now()
-
-                        if not db_news_entity:
-                            logger.info(
-                                f'raifeed.crawl.db_news_entity.add: date={date} name={name} news_source={db_news_source.name} url={url}')
-                            db_news_entity = NewsEntity(
-                                uuid=f'urn:uuid:{str(uuid.uuid4())}',
-                                name=name,
-                                title=title,
-                                date=date,
-                                url=url,
-                                media_type=media_type,
-                                news_source=db_news_source,
-                                created_at=now,
-                                updated_at=now
-                            )
-                        else:
-                            db_news_entity = list(db_news_entity)[0]
-                            db_news_entity.title = title
-                            db_news_entity.date = date
-                            db_news_entity.url = url
-                            db_news_entity.media_type = media_type
-                            db_news_entity.updated_at = now
+    #                     if not db_news_entity:
+    #                         logger.info(
+    #                             f'raifeed.crawl.db_news_entity.add: date={date} name={name} news_source={db_news_source.name} url={url}')
+    #                         db_news_entity = NewsEntity(
+    #                             uuid=f'urn:uuid:{str(uuid.uuid4())}',
+    #                             name=name,
+    #                             title=title,
+    #                             date=date,
+    #                             url=url,
+    #                             media_type=media_type,
+    #                             news_source=db_news_source,
+    #                             created_at=now,
+    #                             updated_at=now
+    #                         )
+    #                     else:
+    #                         db_news_entity = list(db_news_entity)[0]
+    #                         db_news_entity.title = title
+    #                         db_news_entity.date = date
+    #                         db_news_entity.url = url
+    #                         db_news_entity.media_type = media_type
+    #                         db_news_entity.updated_at = now
 
     def news_brief(self, outlet, source, country, region, name):
         logger.info('raifeed.news_brief')
@@ -233,7 +178,7 @@ scheduler.add_job(
 )
 
 
-app.add_route('/v1/alexa/flashfeed/rainews/fvg', RaiNewsFVG())
+app.add_route('/v1/alexa/flashfeed/rainews/fvg/gr', RaiNewsFVG())
 
 if __name__ == '__main__':
     rai_feed = RAIFeed()
