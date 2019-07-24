@@ -1,6 +1,6 @@
 import requests
 import uuid
-import pprint
+
 
 class Resource(object):
     crawler = None
@@ -50,7 +50,7 @@ class Crawler(object):
 
         for news_entity in news_entities.values():
             if news_entity['news_source']['name'] != news_source_name or \
-                news_entity['news_source']['news_outlet']['name'] != news_outlet_name:
+                    news_entity['news_source']['news_outlet']['name'] != news_outlet_name:
                 continue
 
             title_text = f'{news_entity["news_source"]["name"].upper()} {news_entity["title"]}'.replace(

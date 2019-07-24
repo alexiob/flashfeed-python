@@ -7,6 +7,7 @@ import uuid
 from apscheduler.schedulers.background import BackgroundScheduler
 
 from .crawlers import CRAWLERS
+from .routes import ROUTES
 
 
 class FlashFeed(object):
@@ -58,6 +59,14 @@ class FlashFeed(object):
     def _start_server(self):
         self._server = falcon.API(media_type=falcon.MEDIA_JSON)
 
+        for route_resource in ROUTES:
+            route = route_resource.route
+            resource = route_resource(self._logger)
+
+            self._logger.info(
+                f'adding route "{route}" with resource {resource}')
+            self._server.add_route(route, resource)
+
         for news_outlet in self._news_outlets:
             for news_source in news_outlet.get('news_sources', []):
                 if news_source.get('enabled', False):
@@ -71,7 +80,8 @@ class FlashFeed(object):
                         self._news_entities
                     )
 
-                    self._logger.info(f'adding route "{route}" with resource {resource}')
+                    self._logger.info(
+                        f'adding route "{route}" with resource {resource}')
                     self._server.add_route(route, resource)
 
     def crawl(self):
@@ -79,7 +89,8 @@ class FlashFeed(object):
             for news_source in news_outlet.get('news_sources', []):
                 if news_source.get('enabled', False):
                     crawler = CRAWLERS[news_source['crawler']]
-                    crawler.fetch(self._logger, news_source, self._news_entities)
+                    crawler.fetch(self._logger, news_source,
+                                  self._news_entities)
 
     @staticmethod
     def run():
