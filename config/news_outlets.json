@@ -4,7 +4,7 @@
     "country": "it",
     "url": "https: //www.rainews.it",
     "news_sources": [{
-            "name": "rainews_gr",
+            "name": "gr",
             "enabled": true,
             "crawler": "rainews",
             "title": "RAI News FVG",
@@ -15,7 +15,7 @@
             "route": "/rainews/fvg/gr"
         },
         {
-            "name": "rainews_gr",
+            "name": "gr",
             "enabled": true,
             "crawler": "rainews",
             "title": "RAI News Veneto",

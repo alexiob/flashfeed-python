@@ -21,8 +21,8 @@ docker run --name flashfeed-python --rm -p 41384:41384 -t flashfeed-python:lates
 docker stop flashfeed-python
 docker run \
  -v /etc/letsencrypt/live/flashfeed.iob.toys/fullchain.pem:/ssl/fullchain.pem \
- -v /etc/letsencrypt/live/flashfeed.iob.toys/privkey.pem:privkey.pem\
- --name flashfeed-python --rm -d -p 41384:41384 -t \
+ -v /etc/letsencrypt/live/flashfeed.iob.toys/privkey.pem:/ssl/privkey.pem\
+ --name flashfeed-python --rm -d -p 443:41384 -t \
  alexiob/flashfeed-python:latest
 ```
 
