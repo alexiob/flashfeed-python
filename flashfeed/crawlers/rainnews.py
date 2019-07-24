@@ -1,5 +1,4 @@
 from bs4 import BeautifulSoup
-import pprint
 
 import datetime
 from dateutil.parser import parse
@@ -22,11 +21,8 @@ class RaiNews(Crawler):
         urls = {}
 
         data_feeds = soup.select('[data-feed]')
-        # print(data_feeds)
 
         for data_feed in data_feeds:
-            # print(dir(data_feed))
-
             name = data_feed.getText().lower().replace(' ', '_')
             url = news_source['base_url'] + data_feed['data-feed']
             content = RaiNews._request_get(url).json()
