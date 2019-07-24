@@ -11,7 +11,7 @@ from .routes import ROUTES
 
 
 class FlashFeed(object):
-    BASE_ROUTE = '/v1/alexa/flashfeed'
+    BASE_ROUTE = '/v1/api/alexa/flashfeed'
 
     def __init__(self, news_outlets_config_path):
         self._setup_logger()

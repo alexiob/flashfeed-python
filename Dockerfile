@@ -16,4 +16,4 @@ COPY ./config ./config
 
 EXPOSE 41384
 
-ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:41384", "flashfeed.__main__:server"]
+ENTRYPOINT ["gunicorn", "--certfile", "/ssl/fullchain.pem", "--keyfile", "/ssl/privkey.pem", "--bind", "0.0.0.0:41384", "flashfeed.__main__:server"]
