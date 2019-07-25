@@ -13,8 +13,11 @@ from .routes import ROUTES
 class FlashFeed(object):
     BASE_ROUTE = '/v1/api/alexa/flashfeed'
 
-    def __init__(self, news_outlets_config_path):
+    def __init__(self, config_path):
         self._setup_logger()
+        self._load_config(config_path)
+
+        news_outlets_config_path = self._config.get('crawler').get('news_outlets_config_path')
         self._load_news_outlets_config(news_outlets_config_path)
 
     def _setup_logger(self):
@@ -29,6 +32,10 @@ class FlashFeed(object):
         logger.addHandler(handler)
 
         self._logger = logger
+
+    def _load_config(self, config_path):
+        with open(config_path) as config_file:
+            self._config = json.load(config_file)
 
     def _load_news_outlets_config(self, news_outlets_config_path):
         with open(news_outlets_config_path) as news_outlets_config_file:
@@ -47,13 +54,14 @@ class FlashFeed(object):
         self._start_server()
         self.crawl()
 
+
     def _start_scheduler(self):
         scheduler = BackgroundScheduler()
         scheduler.start()
         scheduler.add_job(
             self.crawl,
             'interval',
-            seconds=60*55
+            seconds=self._config.get('crawler', {}).get('every_seconds', 60*60)
         )
 
     def _start_server(self):
@@ -70,19 +78,21 @@ class FlashFeed(object):
         for news_outlet in self._news_outlets:
             for news_source in news_outlet.get('news_sources', []):
                 if news_source.get('enabled', False):
-                    route = self.BASE_ROUTE + '/' + \
-                        news_source['route'].strip('/')
-
                     crawler = CRAWLERS[news_source['crawler']]
-                    resource = crawler.resource(
-                        self._logger,
-                        news_source,
-                        self._news_entities
-                    )
 
-                    self._logger.info(
-                        f'adding route "{route}" with resource {resource}')
-                    self._server.add_route(route, resource)
+                    for entity_name, entity_route in news_source.get('entities', {}).items():
+                        route = self.BASE_ROUTE + '/' + entity_route.strip('/')
+
+                        resource = crawler.resource(
+                            self._logger,
+                            news_source,
+                            self._news_entities,
+                            entity_name
+                        )
+
+                        self._logger.info(
+                            f'adding route "{route}" with resource {resource}')
+                        self._server.add_route(route, resource)
 
     def crawl(self):
         for news_outlet in self._news_outlets:
@@ -94,7 +104,7 @@ class FlashFeed(object):
 
     @staticmethod
     def run():
-        flashfeed = FlashFeed('./config/news_outlets.json')
+        flashfeed = FlashFeed('./config/default.json')
         flashfeed.start()
 
         return flashfeed._server

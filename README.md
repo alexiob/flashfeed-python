@@ -10,6 +10,14 @@ docker build -t flashfeed-python:latest .
 
 ## Local Start
 
+Python:
+
+```sh
+gunicorn --bind 0.0.0.0:41384 "flashfeed.__main__:server"
+```
+
+Docker:
+
 ```sh
 docker stop flashfeed-python
 docker run --name flashfeed-python --rm -p 41384:41384 -t flashfeed-python:latest
@@ -31,5 +39,5 @@ docker run \
 On the server, open port, if needed:
 
 ```sh
-ufw allow 41384/tcp
+ufw allow 443/tcp
 ```

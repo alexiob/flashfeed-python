@@ -1,0 +1,6 @@
+{
+    "crawler": {
+        "every_seconds": 3600,
+        "news_outlets_config_path": "./config/news_outlets.json"
+    }
+}

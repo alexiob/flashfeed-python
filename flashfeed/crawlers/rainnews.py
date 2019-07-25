@@ -35,9 +35,10 @@ class RaiNews(Crawler):
                 url = RaiNews._to_https(item['mediaUrl'])
                 media_type = RaiNews._get_media_type(item['type'])
 
-                news_entity = news_entities.setdefault(news_source['id'], {})
+                news_entity_key = RaiNews._news_entity_key(news_source, name)
+                news_entity = news_entities.setdefault(news_entity_key, {})
 
-                if news_entity and news_entity['name'] == name and news_entity['url'] == url:
+                if news_entity and news_entity['url'] == url:
                     logger.info(
                         f'flashfeed.crawler.rainews.present: date={date} name={name} title={title} news_source={news_source["name"]} url={url}'
                     )
