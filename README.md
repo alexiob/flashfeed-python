@@ -36,8 +36,14 @@ docker run \
 
 ## Deploy
 
-On the server, open port, if needed:
+On the Ubuntu server, open the `443` port, if needed:
 
 ```sh
 ufw allow 443/tcp
+```
+
+## Endpoint Test
+
+```sh
+curl -X GET https://flashfeed.iob.toys/v1/api/alexa/flashfeed/rainews/fvg/gr
 ```

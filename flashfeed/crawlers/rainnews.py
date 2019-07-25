@@ -38,11 +38,11 @@ class RaiNews(Crawler):
                 news_entity_key = RaiNews._news_entity_key(news_source, name)
                 news_entity = news_entities.setdefault(news_entity_key, {})
 
-                if news_entity and news_entity['url'] == url:
+                if news_entity and news_entity['url'] == url and news_entity['title'] == title and news_entity['date'] == date:
                     logger.info(
                         f'flashfeed.crawler.rainews.present: date={date} name={name} title={title} news_source={news_source["name"]} url={url}'
                     )
-                    return
+                    continue
 
                 now = datetime.datetime.now()
 
