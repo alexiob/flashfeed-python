@@ -13,7 +13,7 @@
             "url": "https://www.rainews.it/tgr/fvg/notiziari/",
             "base_url": "https://www.rainews.it",
             "entities": {
-                "gr": "/rainews/fvg/gr"
+                "gr": "/rainews/rainews/it/fvg/gr"
             }
         },
         {
@@ -26,7 +26,7 @@
             "url": "https://www.rainews.it/tgr/veneto/notiziari/",
             "base_url": "https://www.rainews.it",
             "entities": {
-                "gr": "/rainews/veneto/gr"
+                "gr": "/rainews/rainews/it/veneto/gr"
             }
         }
     ]
