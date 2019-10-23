@@ -45,5 +45,5 @@ ufw allow 443/tcp
 ## Endpoint Test
 
 ```sh
-curl -X GET https://flashfeed.iob.toys/v1/api/alexa/flashfeed/rainews/fvg/gr
+curl -X GET https://flashfeed.iob.toys/v1/api/alexa/flashfeed/rainews/rainews/it/fvg/gr
 ```
